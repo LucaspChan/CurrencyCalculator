@@ -1,0 +1,85 @@
+﻿@model fixer.Models.TaxInput
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+         
+<div class="calculator__container">  
+    
+    <h1 class="calculator__title">Currency Calculator</h1> 
+    
+    <section class="calculatorField__container">  
+        <div class="calculator__label">  
+            @Html.LabelFor(model => model.InvoiceDate)  
+            <div class="calculator__field">  
+                <input type="text" id="InvoiceDate" name="InvoiceDate" value="2021-10-10" />
+            </div>
+        </div>  
+
+        <div class="calculator__label">  
+            @Html.LabelFor(model => model.PreTaxAmount) 
+            <div class="calculator__field">  
+                @Html.TextBoxFor(model => model.PreTaxAmount)            
+            </div>  
+        </div>  
+
+        <div class="calculator__label">  
+            @Html.LabelFor(model => model.PreTaxCurrency)  
+            <div class="calculator__field">  
+                @Html.TextBoxFor(model => model.PreTaxCurrency, new { @readonly="readonly" })            
+            </div> 
+        </div>  
+ 
+        <div class="calculator__label">  
+            @Html.LabelFor(model => model.PaymentCurrency)
+            <div class="calculator__field">  
+                @Html.EditorFor(model => model.PaymentCurrency)             
+            </div>  
+        </div>
+        
+    </section>  
+    <button class="calculator__button" type="button" onclick="fixerApi()">Calculate</button>  
+
+    <div id="answer"></div>
+</div>
+
+<script>
+    const fixerApi = () => {
+        let dateObj = new Date($('#InvoiceDate').val());
+        let settings = {
+          "url": "https://localhost:7173/tax/GetTaxes",
+          "method": "POST",
+          "timeout": 0,
+          "headers": {
+            "Content-Type": "application/json"
+          },
+          "data": JSON.stringify({
+            "InvoiceDate": dateObj,
+            "PreTaxAmount": $('#PreTaxAmount').val(),
+            "PreTaxCurrency": "EUR",
+            "PaymentCurrency": $('#PaymentCurrency').val().toString()
+          }),
+        };
+
+        $.ajax(settings).done(function (response) {
+          const calculatedValues = JSON.parse(response);
+          console.log(calculatedValues);
+          $('#answer').text("Pre-Tax Total: " 
+          + numberWithCommas(calculatedValues.PreTaxTotal.TotalAmount.toFixed(2)) + " " 
+          + calculatedValues.PreTaxTotal.CurrencyCode +", Tax Amount: " 
+          + numberWithCommas(calculatedValues.TaxAmount.TotalAmount.toFixed(2)) + " " 
+          + calculatedValues.TaxAmount.CurrencyCode + ", Grand Total: " 
+          + numberWithCommas(calculatedValues.GrandTotal.TotalAmount.toFixed(2)) + " " 
+          + calculatedValues.GrandTotal.CurrencyCode + ", Exchange Rate: " 
+          + calculatedValues.ExchangeRate);
+        });
+    }
+    $(document).ready(function () {
+    });
+
+    const numberWithCommas = (x) => {
+        return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+</script>
